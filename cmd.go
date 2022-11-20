@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	Z "github.com/rwxrob/bonzai/z"
@@ -13,11 +12,9 @@ import (
 	"github.com/rwxrob/emb"
 	"github.com/rwxrob/help"
 	"github.com/rwxrob/vars"
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
-	"gopkg.in/yaml.v3"
 )
 
 //go:embed files/*
@@ -61,99 +58,50 @@ var printCmd = &Z.Cmd{
 	Call: func(x *Z.Cmd, _ ...string) error {
 		ctx := context.Background()
 
-		jsn, _ := emb.Cat("credentials2.json")
+		jsn, _ := emb.Cat("credentials.json")
 		// If modifying these scopes, delete your previously saved token.json.
 		config, err := google.ConfigFromJSON(jsn, calendar.CalendarReadonlyScope)
 		if err != nil {
 			log.Fatalf("Unable to parse client secret file to config: %v", err)
 		}
-		client := getClient(config)
+		client := GetClient(config)
 
 		srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
-
 		if err != nil {
 			log.Printf("Unable to retrieve Calendar client: %v", err)
 			return nil
 		}
-		//Time min
-		min := time.Now().Format(time.RFC3339)
-		//max := time.Date(2022, time.November, 24, 0, 0, 0, 0, time.Local).Format(time.RFC3339)
-		events, err := srv.Events.List("primary").SingleEvents(true).TimeMin(min).MaxResults(3).Do()
+		//Time range for today min and max
+		t := time.Now()
+		min := time.Date(t.Year(), t.Month(), 21, 0, 0, 0, 0, time.Local).Format(time.RFC3339)
+		max := time.Date(t.Year(), t.Month(), 21, 23, 59, 0, 0, time.Local).Format(time.RFC3339)
+		events, err := srv.Events.List("primary").SingleEvents(true).TimeMin(min).TimeMax(max).OrderBy("startTime").Do()
 		if err != nil {
 			log.Printf("Unable to retrieve next ten of the user's events: %v", err)
 			return nil
 		}
+
 		fmt.Println("Upcoming events:")
 		if len(events.Items) == 0 {
 			fmt.Println("No upcoming events found.")
 		} else {
 			for _, item := range events.Items {
-				date := item.Start.DateTime
-				if date == "" {
-					date = item.Start.Date
+				s := item.Start.DateTime
+				if s == "" {
+					s = item.Start.Date
 				}
-				fmt.Printf("%v (%v)\n", item.Summary, date)
+				sTime, err := time.Parse(time.RFC3339, s)
+				if err != nil {
+					log.Println(err)
+					continue
+				}
+				e := item.End.DateTime
+				eTime, err := time.Parse(time.RFC3339, e)
+				fmt.Printf("%v (%v-%v)\n", item.Summary, sTime.Format("3:04PM"), eTime.Format("3:04PM"))
+				fmt.Printf("%v\n", item.Description)
+
 			}
 		}
 		return nil
 	},
-}
-
-// Retrieve a token, saves the token, then returns the generated client.
-func getClient(config *oauth2.Config) *http.Client {
-	tok, err := tokenFromFile(config)
-	if err != nil {
-		tok = getTokenFromWeb(config)
-		saveToken(tok)
-	}
-	return config.Client(context.Background(), tok)
-}
-
-// Request a token from the web, then returns the retrieved token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
-
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
-	}
-
-	tok, err := config.Exchange(context.TODO(), authCode)
-	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
-	}
-	return tok
-}
-
-// Retrieves a token from a local file.
-func tokenFromFile(config *oauth2.Config) (*oauth2.Token, error) {
-	//Get token from bonzai conf
-	c, err := Z.Conf.Data()
-	if err != nil {
-		return nil, err
-	}
-	tok := &oauth2.Token{}
-	err = yaml.Unmarshal([]byte(c), tok)
-	//Refresh token if expired
-	if !tok.Valid() {
-		src := config.TokenSource(context.Background(), tok)
-		newToken, err := src.Token()
-		if err != nil {
-			return tok, err
-		}
-		//Check that the new token is different to expired token before
-		//saving to bonzai conf
-		if newToken.AccessToken != tok.AccessToken {
-			saveToken(newToken)
-			return newToken, nil
-		}
-	}
-	return tok, err
-}
-
-// Saves a token to bonzai config
-func saveToken(token *oauth2.Token) {
-	Z.Conf.OverWrite(token)
 }
