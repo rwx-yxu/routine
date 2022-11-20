@@ -1,7 +1,6 @@
 package routine
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"log"
@@ -12,9 +11,6 @@ import (
 	"github.com/rwxrob/emb"
 	"github.com/rwxrob/help"
 	"github.com/rwxrob/vars"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/calendar/v3"
-	"google.golang.org/api/option"
 )
 
 //go:embed files/*
@@ -39,9 +35,9 @@ var Cmd = &Z.Cmd{
 	Issues:    `github.com/rwx-yxu/routine/issues`,
 
 	Commands: []*Z.Cmd{
-		printCmd,
+		todayCmd,
 		// standard external branch imports (see rwxrob/{help,conf,vars})
-		help.Cmd, conf.Cmd, vars.Cmd, emb.Cmd,
+		help.Cmd, conf.Cmd, vars.Cmd, emb.Cmd, printCmd,
 	},
 
 	// Add custom BonzaiMark template extensions (or overwrite existing ones).
@@ -51,30 +47,21 @@ var Cmd = &Z.Cmd{
 			`,
 }
 
-var printCmd = &Z.Cmd{
+var todayCmd = &Z.Cmd{
 	Name:     `today`,
 	Summary:  `print today routine to standard output (default)`,
 	Commands: []*Z.Cmd{help.Cmd},
 	Call: func(x *Z.Cmd, _ ...string) error {
-		ctx := context.Background()
 
-		jsn, _ := emb.Cat("credentials.json")
-		// If modifying these scopes, delete your previously saved token.json.
-		config, err := google.ConfigFromJSON(jsn, calendar.CalendarReadonlyScope)
-		if err != nil {
-			log.Fatalf("Unable to parse client secret file to config: %v", err)
-		}
-		client := GetClient(config)
-
-		srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
+		srv, err := GetService()
 		if err != nil {
 			log.Printf("Unable to retrieve Calendar client: %v", err)
 			return nil
 		}
 		//Time range for today min and max
 		t := time.Now()
-		min := time.Date(t.Year(), t.Month(), 21, 0, 0, 0, 0, time.Local).Format(time.RFC3339)
-		max := time.Date(t.Year(), t.Month(), 21, 23, 59, 0, 0, time.Local).Format(time.RFC3339)
+		min := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Format(time.RFC3339)
+		max := time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 0, 0, time.Local).Format(time.RFC3339)
 		events, err := srv.Events.List("primary").SingleEvents(true).TimeMin(min).TimeMax(max).OrderBy("startTime").Do()
 		if err != nil {
 			log.Printf("Unable to retrieve next ten of the user's events: %v", err)
@@ -102,6 +89,42 @@ var printCmd = &Z.Cmd{
 
 			}
 		}
+		return nil
+	},
+}
+
+var printCmd = &Z.Cmd{
+	Name:     `print`,
+	Summary:  `Print out today's routine to a thermal printer on CUPS server`,
+	Commands: []*Z.Cmd{help.Cmd},
+	MaxArgs:  1,
+	Call: func(x *Z.Cmd, args ...string) error {
+		if len(args) == 0 {
+			log.Println("Please supply the printer name arg")
+			return nil
+		}
+		srv, err := GetService()
+		if err != nil {
+			log.Printf("Unable to retrieve Calendar client: %v", err)
+			return nil
+		}
+		//Time range for today min and max
+		t := time.Now()
+		min := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Format(time.
+			RFC3339)
+		max := time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 0, 0, time.Local).Format(time.RFC3339)
+		events, err := srv.Events.List("primary").SingleEvents(true).TimeMin(min).TimeMax(max).OrderBy("startTime").Do()
+		if err != nil {
+			log.Printf("Unable to retrieve next ten of the user's events: %v", err)
+			return nil
+		}
+
+		if len(events.Items) == 0 {
+			//No events so do not print out
+			return nil
+		}
+
+		Print(events, args[0])
 		return nil
 	},
 }

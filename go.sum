@@ -87,6 +87,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rogpeppe/go-internal v1.8.1 h1:geMPLpDpQOgVyCg5z5GoRwLHepNdb71NXb67XFkP+Eg=
 github.com/rogpeppe/go-internal v1.8.1/go.mod h1:JeRgkft04UBgHMgCIwADu4Pn6Mtm5d4nPKWu0nJ5d+o=
+github.com/rwx-yxu/esc-pos v0.0.0-20221031003843-7501434fdaa4 h1:QZ6wsCTg3ZwadC8iu3QJd1sKnuVAdsRnv7NvxS3bL7M=
+github.com/rwx-yxu/esc-pos v0.0.0-20221031003843-7501434fdaa4/go.mod h1:Nc02ibRrC0B2dfsr+MyQr5uR8IS+FhlURLF6jXODI2E=
 github.com/rwxrob/bonzai v0.19.0 h1:+wM55L+/dQUPQdkZl5IYZwD1/YYLLUjNyVmL2hRaf3E=
 github.com/rwxrob/bonzai v0.19.0/go.mod h1:zfWl+2FmPjhfkzkjr7RPqbkHXohEBvOYD3nc4c34ShU=
 github.com/rwxrob/compcmd v0.3.0 h1:AlJNItb7+Yk17qmH5E7TJFyBXhna/rS3NeQAgjqbFls=

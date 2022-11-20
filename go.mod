@@ -31,6 +31,7 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mikefarah/yq/v4 v4.25.1 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
+	github.com/rwx-yxu/esc-pos v0.0.0-20221031003843-7501434fdaa4 // indirect
 	github.com/rwxrob/compcmd v0.3.0 // indirect
 	github.com/rwxrob/compfile v0.1.12 // indirect
 	github.com/rwxrob/fn v0.3.3 // indirect
