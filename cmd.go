@@ -60,6 +60,7 @@ var todayCmd = &Z.Cmd{
 		}
 		//Time range for today min and max
 		t := time.Now()
+		fmt.Printf("%s\n", t.Format(time.RFC822))
 		min := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local).Format(time.RFC3339)
 		max := time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 0, 0, time.Local).Format(time.RFC3339)
 		events, err := srv.Events.List("primary").SingleEvents(true).TimeMin(min).TimeMax(max).OrderBy("startTime").Do()
@@ -84,7 +85,7 @@ var todayCmd = &Z.Cmd{
 				}
 				e := item.End.DateTime
 				eTime, err := time.Parse(time.RFC3339, e)
-				fmt.Printf("%v (%v-%v)\n", item.Summary, sTime.Format("3:04PM"), eTime.Format("3:04PM"))
+				fmt.Printf("%v (%v-%v)\n", item.Summary, sTime.Format(time.Kitchen), eTime.Format(time.Kitchen))
 				fmt.Printf("%v\n", item.Description)
 
 			}

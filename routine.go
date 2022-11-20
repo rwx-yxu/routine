@@ -33,9 +33,11 @@ func Print(e *calendar.Events, name string) {
 
 	words := []string{}
 	words = append(words, seq.Default)
+	now := time.Now().Format(time.RFC822)
 	//Header
 	words = append(words, fmt.Sprintf("%v%v%s\n", seq.Center, seq.CharSize(1), "Routine"))
-	words = append(words, fmt.Sprintf("%v%15v%v", seq.UL, " ", seq.ULOff))
+	words = append(words, fmt.Sprintf("%v%s\n", seq.Default, now))
+	words = append(words, fmt.Sprintf("%v%v%15v%v", seq.UL, seq.CharSize(1), " ", seq.ULOff))
 
 	for _, i := range e.Items {
 		s := i.Start.DateTime
@@ -50,8 +52,8 @@ func Print(e *calendar.Events, name string) {
 		e := i.End.DateTime
 		eTime, err := time.Parse(time.RFC3339, e)
 		words = append(words, fmt.Sprintf("%v%v", seq.Default, seq.GS+"\x21\x01\x03"))
-		words = append(words, fmt.Sprintf("\n%v%s %s (%s-%s)\n", seq.Left, i.Summary, sTime, eTime))
-		words = append(words, fmt.Sprintf("%s", i.Description))
+		words = append(words, fmt.Sprintf("\n%s (%s-%s)\n", i.Summary, sTime.Format(time.Kitchen), eTime.Format(time.Kitchen)))
+		words = append(words, fmt.Sprintf("%s\n", i.Description))
 	}
 	words = append(words, fmt.Sprintf("%v%47v%v\n", seq.UL, " ", seq.ULOff))
 
