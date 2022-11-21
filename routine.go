@@ -22,14 +22,14 @@ import (
 func Print(e *calendar.Events, name string) {
 	fileName := "data.txt"
 
-	f, err := os.Create(fileName)
+	f, err := os.CreateTemp("", fileName)
 
 	if err != nil {
 
 		log.Fatal(err)
 	}
 
-	defer f.Close()
+	defer os.Remove(f.Name())
 
 	words := []string{}
 	words = append(words, seq.Default)
@@ -51,7 +51,7 @@ func Print(e *calendar.Events, name string) {
 		}
 		e := i.End.DateTime
 		eTime, err := time.Parse(time.RFC3339, e)
-		words = append(words, fmt.Sprintf("%v%v", seq.Default, seq.GS+"\x21\x01\x03"))
+		words = append(words, fmt.Sprintf("%v%v", seq.Default, seq.GS+"\x21\x01\x01"))
 		words = append(words, fmt.Sprintf("\n%s (%s-%s)\n", i.Summary, sTime.Format(time.Kitchen), eTime.Format(time.Kitchen)))
 		words = append(words, fmt.Sprintf("%s\n", i.Description))
 	}
@@ -67,7 +67,7 @@ func Print(e *calendar.Events, name string) {
 		}
 	}
 
-	cmd := exec.Command("lp", "-d", name, fileName)
+	cmd := exec.Command("lp", "-d", name, f.Name())
 
 	err = cmd.Run()
 	if err != nil {
